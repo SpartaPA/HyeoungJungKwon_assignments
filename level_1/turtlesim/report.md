@@ -87,6 +87,18 @@ ros2 topic echo /waypoints
 ros2 action send_goal /draw_polygon turtle_interfaces/action/DrawPolygon "{sides: 4, side_length: 1.0}"
 ```
 
+## 문제 7 — QoS 진단
+
+`qos_demo.py`는 Best-Effort publisher와 Reliable subscriber 조합을 제공해 비호환을 재현하고, 별도 waypoint publisher는 `TRANSIENT_LOCAL`로 늦게 연결한 구독자에게 마지막 메시지를 전달한다. 진단은 `ros2 topic info /turtle_dist --verbose`에서 Reliability/Durability를 비교하고 양쪽을 Best-Effort로 맞추는 순서다. depth 1과 느린 콜백을 조합하면 큐가 덮어써져 메시지 누락이 발생한다.
+
+| 토픽 | Reliability | Durability | 근거 |
+|---|---|---|---|
+| `/turtle1/pose` | Best Effort | Volatile | 최신 센서 스트림 |
+| `/turtle1/cmd_vel` | Reliable | Volatile | 제어 명령 손실 방지 |
+| `/waypoints` | Reliable | Transient Local | late-joiner도 경유점 필요 |
+| `/turtle_dist` | Best Effort | Volatile | 계산된 주기 스트림 |
+| `/diagnostics` | Reliable | Volatile | 진단 이벤트 보존 |
+
 실행 명령과 확인 결과는 각 패키지의 소스 주석 및 아래 절에 기록한다. ROS 2가 설치된 Ubuntu에서 다음을 먼저 실행한다.
 
 ```bash
