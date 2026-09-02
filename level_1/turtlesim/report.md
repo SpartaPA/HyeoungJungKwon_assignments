@@ -43,6 +43,28 @@ cmake --build cpp_basics/sensors/build
 
 누수 재현은 `new Lidar`를 `delete`하지 않는 별도 실험으로 `-fsanitize=address` 또는 Valgrind에서 확인하고, 제출 구현은 `std::make_unique`로 수정한 상태다.
 
+## 문제 3 — rclpy 상태 발행·감시·정사각형 주행
+
+`turtle_py`는 `/turtle1/pose`의 `x,y,theta,linear_velocity,angular_velocity`를 받아 최신 Pose만 저장하고 타이머에서 5 Hz로 `std_msgs/msg/Float64` `/turtle_dist`를 발행한다. 기본 QoS depth는 13이며 `publish_rate`와 `warn_distance`는 런타임 파라미터다. `square_driver`는 전진/제자리 회전을 번갈아 보내고 종료 시 zero Twist를 발행한다.
+
+```bash
+ros2 run turtlesim turtlesim_node
+ros2 run turtle_py distance_publisher
+ros2 run turtle_py distance_monitor --ros-args -p warn_distance:=3.0
+ros2 topic hz /turtle_dist
+```
+
+## 문제 4 — rclcpp 교차 언어 통신
+
+`turtle_cpp`의 `distance_publisher_cpp`와 `distance_monitor_cpp`는 동일한 `/turtle_dist`·Float64·depth 13 규격을 사용한다. Python publisher와 C++ monitor를 섞어 실행해도 ROS 2 인터페이스 타입이 같으므로 통신한다.
+
+| 항목 | rclpy | rclcpp |
+|---|---|---|
+| 노드 생성 | `Node(...)` | `class Node` 상속 |
+| 타이머 | `create_timer` | `create_wall_timer` |
+| 콜백 | Python 함수 | lambda/std::function |
+| 종료 | destroy + shutdown | shutdown |
+
 실행 명령과 확인 결과는 각 패키지의 소스 주석 및 아래 절에 기록한다. ROS 2가 설치된 Ubuntu에서 다음을 먼저 실행한다.
 
 ```bash
