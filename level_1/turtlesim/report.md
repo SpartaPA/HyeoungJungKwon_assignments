@@ -99,6 +99,34 @@ ros2 action send_goal /draw_polygon turtle_interfaces/action/DrawPolygon "{sides
 | `/turtle_dist` | Best Effort | Volatile | 계산된 주기 스트림 |
 | `/diagnostics` | Reliable | Volatile | 진단 이벤트 보존 |
 
+## 문제 8 — colcon 워크스페이스
+
+`ros2_ws/src`에는 `turtle_interfaces`, `turtle_py`, `turtle_cpp`가 있다. `colcon`은 package.xml 의존성 DAG를 분석하므로 interface 패키지가 먼저 빌드된다. `source install/setup.bash` 전에는 overlay 패키지를 찾지 못하고, 후에는 `AMENT_PREFIX_PATH`와 Python 경로가 등록되어 `ros2 run`이 동작한다.
+
+## 문제 9 — launch와 파라미터
+
+`launch/turtle_system.launch.py`는 turtlesim, publisher, monitor, polygon action server를 함께 기동한다. `publish_rate`와 `warn_distance`는 launch argument 및 `config/params.yaml`로 주입한다.
+
+```bash
+ros2 launch turtle_py turtle_system.launch.py publish_rate:=5.0 warn_distance:=1.0
+ros2 node list
+ros2 param get /distance_publisher publish_rate
+```
+
+네임스페이스 실행은 `ros2 run turtle_py distance_publisher --ros-args -r __ns:=/turtle2`처럼 수행하며 해당 노드의 상대 토픽을 namespace 아래로 격리한다.
+
+## 문제 10 — TF·기록·테스트
+
+`tf_marker_broadcaster`는 `world -> turtle1` TF와 `/waypoint_markers` Marker를 발행한다. RViz2 Fixed Frame은 `world`로 설정한다. 기록/재생은 다음으로 확인한다.
+
+```bash
+ros2 bag record -o bags/turtle_run /turtle1/pose /turtle_dist
+ros2 bag play bags/turtle_run
+pytest -q ros2_ws/src/turtle_py/test
+```
+
+계산 함수 테스트는 거리, `[-pi,pi]` 각도 정규화, 허용 오차 경계 및 음수 tolerance 예외를 다룬다. 데이터 미수신 시 `ros2 node list` → `ros2 topic list` → `ros2 topic info --verbose`(타입/QoS) → `ros2 topic hz` → publisher 로그 순서로 진단한다. 빈 waypoint 목록과 잘못된 publish rate는 경고 후 안전한 기본값/무동작으로 처리한다.
+
 실행 명령과 확인 결과는 각 패키지의 소스 주석 및 아래 절에 기록한다. ROS 2가 설치된 Ubuntu에서 다음을 먼저 실행한다.
 
 ```bash
@@ -107,3 +135,13 @@ source /opt/ros/humble/setup.bash
 colcon build --symlink-install
 source install/setup.bash
 ```
+
+### 제출 체크리스트
+
+- `cpp_basics/`: 문제 1·2 소스와 CMake
+- `ros2_ws/src/`: 문제 3~10 패키지 전체
+- `screenshots/`: turtlesim/rqt_graph/RViz2 캡처 위치
+- `bags/`: rosbag 기록 결과 위치
+- 압축 시 `build/`, `install/`, `log/`는 제외
+
+현재 개발 호스트에는 ROS2 Humble, colcon, pytest, RViz2가 설치되어 있지 않아 GUI·bag 실측 로그는 생성하지 못했다. Ubuntu 22.04 + Humble에서 위 명령을 실행해 캡처와 bag를 채우면 제출본이 완성된다.

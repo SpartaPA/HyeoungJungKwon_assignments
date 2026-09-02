@@ -1,4 +1,5 @@
 import asyncio
+import math
 import rclpy
 from rclpy.action import ActionServer, CancelResponse, GoalResponse
 from rclpy.node import Node
@@ -16,6 +17,9 @@ class DrawPolygonServer(Node):
             for _ in range(10):
                 if goal_handle.is_cancel_requested: self.pub.publish(Twist()); goal_handle.canceled(); return result
                 msg=Twist(); msg.linear.x=goal.side_length; self.pub.publish(msg); await asyncio.sleep(0.1)
+            for _ in range(10):
+                if goal_handle.is_cancel_requested: self.pub.publish(Twist()); goal_handle.canceled(); return result
+                msg=Twist(); msg.angular.z=2.0*math.pi/goal.sides; self.pub.publish(msg); await asyncio.sleep(0.1)
             self.pub.publish(Twist()); total += goal.side_length; feedback.completed_sides=side+1; feedback.progress=(side+1)/goal.sides; goal_handle.publish_feedback(feedback)
         result.total_distance=total; goal_handle.succeed(); return result
 def main(args=None):

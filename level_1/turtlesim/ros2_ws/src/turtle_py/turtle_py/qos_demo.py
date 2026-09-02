@@ -25,3 +25,13 @@ class LatchedWaypointPublisher(Node):
     def publish(self):
         if self.sent:return
         self.pub.publish(WaypointList()); self.sent=True
+
+def main(args=None):
+    rclpy.init(args=args)
+    node = BestEffortDistancePublisher()
+    try:
+        rclpy.spin(node)
+    except KeyboardInterrupt:
+        pass
+    finally:
+        node.destroy_node(); rclpy.shutdown()
