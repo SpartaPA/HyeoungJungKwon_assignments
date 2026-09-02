@@ -228,8 +228,262 @@ Hard 분류한 작업이 마감을 놓칠시 발생할수 있는 상황
 
 * **주기(Period)** : 특정 작업이 **얼마나 자주 반복되는지**를 의미합니다.
   → **예시:** 모터 PID 제어가 **1 ms마다 한 번씩 실행(1 kHz)**되어 바퀴 속도를 지속적으로 보정합니다.
-
 * **지연(Latency)** : 입력이 발생한 시점부터 **그에 대한 실제 결과가 나오기까지 걸리는 시간**입니다.
   → **예시:** LiDAR가 장애물을 감지한 후 **50 ms 뒤에 모터 정지 명령이 적용됐다면 지연은 50 ms**입니다.
 * **지터(Jitter)** : 작업의 실행 시점이나 간격이 **원래 정해진 시간에서 얼마나 흔들리는지**를 의미합니다.
   → **예시:** PID가 원래 정확히 **1 ms마다 실행**되어야 하는데 실제로는 **0.9 ms → 1.1 ms → 0.95 ms** 간격으로 실행되는 현상입니다.
+
+---
+
+# 문제 2. 원격 접속(SSH)과 센서 장치 경로 고정
+
+## 2-1. 답안 요약(템플릿 1~7)
+
+1. **고른 접속 대상:** `실제 Linux PC` — 기존 캡처의 IP는 `10.2.12.145`, 현재 IP는 `10.2.17.4`이다. MacBook에서 접속 후 `pts/1`과 `SSH_CONNECTION`이 직접 확인되었다.
+2. **서버에 등록하는 키:** 공개키 — 캡처에서 `/home/pa27/.ssh/id_ed25519.pub`를 `ssh-copy-id`로 등록하고 `Number of key(s) added: 1`이 확인된다. 개인키는 클라이언트에만 보관한다.
+3. **원격 단일 명령 및 SCP:** MacBook에서 원격 `uname -a` 실행, 비밀번호 없는 SSH, SCP 송신 및 Linux 수신 파일 확인을 모두 수행했다.
+4. **두 장치 구분 속성:** LiDAR — `loop/backing_file=/home/pa27/fake_sensors/lidar.img`; IMU — `loop/backing_file=/home/pa27/fake_sensors/imu.img`. 최초 연결은 `/dev/loop18`=LiDAR, `/dev/loop19`=IMU로 기록되어 있다.
+5. **udev 규칙:** 아래 `rules/99-robot-sensor.rules`에 제출했다. `/dev/robot_lidar`와 `/dev/robot_imu`는 각각 backing file 조건으로 만든다.
+6. **순서를 바꾼 재연결 검증:** IMU를 먼저 연결해 `/dev/loop18`, LiDAR를 다음에 연결해 `/dev/loop19`가 되었지만, udev 링크는 `/dev/robot_imu -> loop18`, `/dev/robot_lidar -> loop19`로 센서 역할을 올바르게 유지했다.
+7. **실제 USB 규칙:** 과제에서 주어진 `idVendor=0403`과 `idProduct=6001/6015`를 사용하는 초안을 2-5절에 제시했다. 두 장치는 Product ID가 달라 구분한다.
+
+## 2-2. 접속 구성 및 확인 명령
+
+**컴퓨터 역할**
+
+- **MacBook:** SSH 클라이언트. 아래 `ssh`와 `scp`의 송신 측 명령을 실행한다.
+- **Linux PC:** SSH 서버 및 가상 센서/udev 작업 대상. 사용자 `pa27`, 현재 IP `10.2.17.4` (기존 캡처 당시 `10.2.12.145`).
+
+### Linux에서 실행 — SSH 서버 준비
+
+```bash
+sudo apt update
+sudo apt install -y openssh-server
+sudo systemctl enable --now ssh
+systemctl status ssh --no-pager
+ss -tlnp | grep ':22'
+```
+
+사용자가 Linux 터미널에서 실행한 출력으로 SSH 서버 상태를 확인했다.
+
+```text
+Active: active (running) since Wed 2026-09-02 12:31:53 KST
+Server listening on 0.0.0.0 port 22.
+Server listening on :: port 22.
+```
+
+따라서 SSH 서비스 실행과 TCP 22 수신은 충족되었다. 사용자가 보낸 출력에서는 명령어가 붙어 입력되어 `ufw`의 독립적인 출력은 확인되지 않았다.
+
+### MacBook에서 실행 — Linux PC에 원격 접속
+
+```bash
+ssh pa27@10.2.17.4
+```
+
+![MacBook에서 Linux PC로 SSH 접속](images/ssh-udev/16-ssh-login.png)
+
+![SSH 접속 과정 재확인](images/ssh-udev/11-ssh-login-repeat.png)
+
+Ubuntu 환영 문구와 `pa27@pa27-Legion-Pro-5-16IAX10` 프롬프트가 확인된다. 로그인 후 Linux 셸에서 다음 두 명령을 실행했다.
+
+![Linux에서 확인한 IP 주소](images/ssh-udev/05-linux-ip-address.png)
+
+```bash
+who
+echo "$SSH_CONNECTION"
+```
+
+`who`에서 `pts/N`이 보여야 하고, `SSH_CONNECTION`은 `클라이언트 IP 클라이언트 포트 서버 IP 서버 포트` 형식이어야 한다. MacBook에서 실제 Linux SSH 세션으로 확인한 출력은 다음과 같다.
+
+```text
+pa27     pts/1        2026-09-02 15:00 (10.2.17.27)
+SSH_CONNECTION=10.2.17.27 55391 10.2.17.4 22
+```
+
+## 2-3. 키 인증, 비대화형 명령, SCP
+
+### MacBook에서 실행 — 공개키 생성 및 Linux 등록
+
+```bash
+ssh-keygen -t ed25519
+ssh-copy-id pa27@10.2.17.4
+ssh pa27@10.2.17.4
+```
+
+![Linux에서 ed25519 키 생성](images/ssh-udev/01-ssh-keygen.png)
+
+![SSH 디렉터리와 키 파일 목록](images/ssh-udev/02-ssh-directory-list.png)
+
+![localhost에 공개키 1개 등록](images/ssh-udev/03-ssh-copy-id-localhost.png)
+
+![SSH 키 파일 목록 재확인](images/ssh-udev/04-ssh-directory-keys.png)
+
+서버에 등록하는 것은 **공개키**이며, 개인키는 MacBook에만 보관한다. MacBook에서 실제로 다음 결과를 확인했다.
+
+```text
+Source of key(s) to be installed: "/Users/june/.ssh/id_ed25519.pub"
+Number of key(s) added: 1
+KEYLESS_OK
+```
+
+### MacBook에서 실행 — 접속하지 않고 Linux 명령 1회 실행
+
+```bash
+ssh pa27@10.2.17.4 'uname -a'
+```
+
+![MacBook에서 비대화형 uname 실행](images/ssh-udev/15-remote-uname.png)
+
+Linux 출력은 `6.8.0-138-generic`, `Ubuntu SMP`, `x86_64 GNU/Linux`로 확인된다.
+
+### MacBook에서 실행 — SCP 전송
+
+```bash
+scp <MacBook의_테스트_파일> pa27@10.2.17.4:/tmp/
+```
+
+![Linux에서 전송된 bomb_test.txt 내용 확인](images/ssh-udev/10-scp-received-file.png)
+
+MacBook에서 실제 SCP 전송을 수행하고 Linux에서 검증했다.
+
+```text
+scp /tmp/robot_scp_test_20260902.txt pa27@10.2.17.4:/tmp/robot_scp_test_20260902.txt
+SCP_VERIFY=robot ssh scp test
+```
+
+## 2-4. 시리얼 장치와 가상 센서
+
+### Linux에서 실행 — 시리얼 장치 확인
+
+```bash
+ls -l /dev/tty*
+```
+
+![Linux의 tty 장치 파일과 소유 그룹](images/ssh-udev/12-tty-devices.png)
+
+캡처에서 장치 파일의 첫 문자는 `c`이며, 다수의 장치는 소유 그룹 `tty`, 일부는 `dialout`으로 표시된다.
+
+### Linux에서 실행 — 가상 센서 생성 및 loop 연결
+
+```bash
+mkdir -p /home/pa27/fake_sensors
+cd /home/pa27/fake_sensors
+truncate -s 10M lidar.img imu.img
+sudo losetup -f --show lidar.img
+sudo losetup -f --show imu.img
+```
+
+![가상 센서 이미지 생성과 절대 경로 확인](images/ssh-udev/06-create-sensor-images.png)
+
+![LiDAR와 IMU를 loop 장치에 연결](images/ssh-udev/08-loop-setup-output.png)
+
+![loop 연결 명령과 losetup 목록](images/ssh-udev/07-attach-loop-devices.png)
+
+확인된 사실은 다음과 같다.
+
+```text
+/home/pa27/fake_sensors/lidar.img  → 최초 /dev/loop18
+/home/pa27/fake_sensors/imu.img    → 최초 /dev/loop19
+```
+
+두 장치를 구분한 속성은 loop 번호가 아니라 `loop/backing_file`이다. 번호는 연결 순서에 따라 달라질 수 있으므로 고정 식별자로 사용하지 않는다.
+
+### Linux에서 실행 — backing file 조사 예
+
+```bash
+udevadm info --attribute-walk /dev/loop18
+udevadm info --attribute-walk /dev/loop19
+```
+
+![각 loop 장치의 backing file 확인](images/ssh-udev/09-backing-file.png)
+
+캡처에서 `/dev/loop18`은 `/home/pa27/fake_sensors/lidar.img`, `/dev/loop19`는 `/home/pa27/fake_sensors/imu.img`를 가리킨다. 추가로 Linux에서 `udevadm info --attribute-walk`를 직접 실행해 두 장치가 `SUBSYSTEM=="block"`, `KERNEL=="loop18"` 및 `KERNEL=="loop19"`임을 확인했다. 해당 명령의 출력에는 `backing_file` 행이 표시되지 않아, 실제 backing file 값은 다음 sysfs 조회 결과를 사용한다.
+
+```bash
+cat /sys/block/loop18/loop/backing_file
+# /home/pa27/fake_sensors/lidar.img
+cat /sys/block/loop19/loop/backing_file
+# /home/pa27/fake_sensors/imu.img
+```
+
+## 2-5. udev 규칙 및 실제 USB 센서 적용 초안
+
+제출한 규칙 파일: [`rules/99-robot-sensor.rules`](rules/99-robot-sensor.rules)
+
+```udev
+SUBSYSTEM=="block", KERNEL=="loop*", ATTR{loop/backing_file}=="/home/pa27/fake_sensors/lidar.img", SYMLINK+="robot_lidar", MODE="0660", GROUP="disk"
+SUBSYSTEM=="block", KERNEL=="loop*", ATTR{loop/backing_file}=="/home/pa27/fake_sensors/imu.img", SYMLINK+="robot_imu", MODE="0660", GROUP="disk"
+```
+
+| 키/연산자      | 의미                                                                                                            |
+| -------------- | --------------------------------------------------------------------------------------------------------------- |
+| `SUBSYSTEM`  | 장치가 속한 커널 서브시스템을 조건으로 검사한다. loop 장치는`block`, USB 시리얼은 보통 `tty`다.             |
+| `KERNEL`     | 커널 장치 이름을 조건으로 검사한다.`loop*`처럼 패턴을 쓸 수 있다.                                             |
+| `ATTR{...}`  | 현재 장치의 sysfs 속성을 조건으로 검사한다. 여기서는`loop/backing_file`이다.                                  |
+| `ATTRS{...}` | 현재 장치의 상위(parent) 장치까지 올라가 속성을 조건으로 검사한다. USB의`idVendor`, `idProduct`에 적합하다. |
+| `SYMLINK+=`  | `/dev` 아래에 별칭 심볼릭 링크를 추가한다.                                                                    |
+| `MODE=`      | 장치 파일 접근 권한을 설정한다.                                                                                 |
+| `GROUP=`     | 장치 파일 소유 그룹을 설정한다.                                                                                 |
+| `==`         | 조건이 값과 일치하는지 검사한다.                                                                                |
+| `=`          | 속성 값을 설정한다.                                                                                             |
+| `+=`         | 기존 값에 새 값을 추가한다.                                                                                     |
+
+실제 USB 시리얼 센서에 적용할 때의 초안은 다음과 같다. `idVendor`와 `idProduct`는 일반적으로 tty 장치의 부모 USB 장치 속성이므로 `ATTRS`를 사용한다.
+
+```udev
+# LiDAR: 과제에서 제시한 USB ID
+SUBSYSTEM=="tty", ATTRS{idVendor}=="0403", ATTRS{idProduct}=="6001", SYMLINK+="robot_lidar", MODE="0660", GROUP="dialout"
+
+# IMU: 과제에서 제시한 USB ID
+SUBSYSTEM=="tty", ATTRS{idVendor}=="0403", ATTRS{idProduct}=="6015", SYMLINK+="robot_imu", MODE="0660", GROUP="dialout"
+```
+
+두 센서의 `idVendor`는 모두 `0403`으로 같으므로 Vendor ID만으로 구분할 수 없다. LiDAR는 `idProduct=6001`, IMU는 `idProduct=6015`로 다르므로 두 조건을 함께 사용해 구분한다. 실제 장치의 인터페이스 구성에 따라 `KERNEL=="ttyUSB*"` 또는 `KERNEL=="ttyACM*"`를 추가할 수 있지만, 해당 장치명이 확인된 캡처가 없어 이 보고서에는 단정하지 않는다.
+
+## 2-6. 규칙 적용 및 재연결 검증
+
+### Linux에서 실행
+
+```bash
+sudo udevadm control --reload-rules
+sudo udevadm trigger
+ls -l /dev/robot_*
+```
+
+![udev 적용 후 고정 링크와 losetup 상태](images/ssh-udev/13-udev-links.png)
+
+원본 기록에서 최초 결과는 다음과 같이 확인되었다.
+
+```text
+/dev/robot_lidar -> loop18
+/dev/robot_imu   -> loop19
+```
+
+이후 IMU를 먼저, LiDAR를 다음에 연결한 최종 결과는 다음과 같다.
+
+![반대 순서 재연결 후 고정 링크 검증](images/ssh-udev/17-reconnect-reversed.png)
+
+```text
+/dev/robot_imu   -> loop18
+/dev/robot_lidar -> loop19
+readlink -f /dev/robot_lidar  → /dev/loop19
+readlink -f /dev/robot_imu    → /dev/loop18
+```
+
+연결 순서가 바뀌어도 `robot_lidar`는 LiDAR, `robot_imu`는 IMU를 계속 가리키므로 고정 경로 검증을 완료했다.
+
+![고정 링크 확인 후 loop18·loop19 해제](images/ssh-udev/14-udev-links-and-detach.png)
+
+```bash
+# 실제로 사용 중인 loop 번호만 확인한 뒤 해제
+losetup -a
+sudo losetup -d /dev/loop18 /dev/loop19
+
+# IMU를 먼저, LiDAR를 다음에 연결
+sudo losetup -f --show /home/pa27/fake_sensors/imu.img
+sudo losetup -f --show /home/pa27/fake_sensors/lidar.img
+sudo udevadm trigger
+ls -l /dev/robot_*
+readlink -f /dev/robot_lidar
+readlink -f /dev/robot_imu
+```
