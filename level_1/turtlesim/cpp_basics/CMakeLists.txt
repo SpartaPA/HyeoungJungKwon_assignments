@@ -1,0 +1,7 @@
+cmake_minimum_required(VERSION 3.22)
+project(cpp_basics)
+set(CMAKE_CXX_STANDARD 17)
+set(CMAKE_CXX_STANDARD_REQUIRED ON)
+add_compile_options(-Wall -Wextra -Wpedantic)
+add_executable(stop_distance stop_distance.cpp)
+add_executable(motor_demo main.cpp motor.cpp)
