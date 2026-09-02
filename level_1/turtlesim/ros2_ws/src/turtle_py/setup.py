@@ -16,4 +16,5 @@ setup(name=package_name, version='0.1.0', packages=[package_name],
           'draw_polygon_server = turtle_py.draw_polygon_server:main',
           'waypoint_publisher = turtle_py.waypoint_publisher:main',
           'tf_marker_broadcaster = turtle_py.tf_marker_broadcaster:main',
+          'qos_demo = turtle_py.qos_demo:main',
       ]})
