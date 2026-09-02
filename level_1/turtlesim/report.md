@@ -145,3 +145,5 @@ source install/setup.bash
 - 압축 시 `build/`, `install/`, `log/`는 제외
 
 현재 개발 호스트에는 ROS2 Humble, colcon, pytest, RViz2가 설치되어 있지 않아 GUI·bag 실측 로그는 생성하지 못했다. Ubuntu 22.04 + Humble에서 위 명령을 실행해 캡처와 bag를 채우면 제출본이 완성된다.
+
+Linux에서 복사 실행할 명령은 [`LINUX_COMMANDS.md`](LINUX_COMMANDS.md)에 모아 두었다. 빌드와 순수 함수 테스트만 자동 실행하려면 `bash run_linux.sh`를 사용한다.
