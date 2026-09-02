@@ -65,6 +65,28 @@ ros2 topic hz /turtle_dist
 | 콜백 | Python 함수 | lambda/std::function |
 | 종료 | destroy + shutdown | shutdown |
 
+## 문제 5 — Service/Action
+
+`service_client`는 `/turtle1/teleport_absolute`, `/turtle1/set_pen`, `/spawn`, `/clear`를 `call_async`와 `spin_until_future_complete`로 순서 호출한다. `rotate_client`는 `RotateAbsolute`의 remaining 피드백과 결과를 출력한다. 구독 콜백에서 동기 서비스 응답을 기다리면 SingleThreadedExecutor가 현재 콜백에 묶여 응답 콜백을 실행하지 못하므로 교착된다. 비동기 요청과 별도 spin이 정답이다.
+
+| 기능 | 모델 | 근거 |
+|---|---|---|
+| 자세 스트리밍 | Topic | 연속 단방향 데이터 |
+| 순간이동/펜/생성 | Service | 즉시 요청-응답 |
+| 목표 각도 회전 | Action | 장기 작업·피드백·취소 |
+| 궤적 삭제 | Service | 즉시 명령 |
+| 반복 다각형 주행 | Action | 진행률·취소 필요 |
+
+## 문제 6 — 커스텀 인터페이스
+
+`turtle_interfaces`를 노드와 분리해 메시지 생성 의존성과 노드 구현 의존성을 분리했다. `Waypoint`, `WaypointList`, `SetGain`, `DrawPolygon` 정의와 waypoint publisher, polygon action server를 포함한다.
+
+```bash
+ros2 interface show turtle_interfaces/msg/WaypointList
+ros2 topic echo /waypoints
+ros2 action send_goal /draw_polygon turtle_interfaces/action/DrawPolygon "{sides: 4, side_length: 1.0}"
+```
+
 실행 명령과 확인 결과는 각 패키지의 소스 주석 및 아래 절에 기록한다. ROS 2가 설치된 Ubuntu에서 다음을 먼저 실행한다.
 
 ```bash
