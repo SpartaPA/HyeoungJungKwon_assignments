@@ -175,6 +175,8 @@ git log --oneline --graph --all
 
 실제 Linux에서 `/tmp/verify_module1_udev.sh`를 실행했다. 확인 결과는 다음과 같다.
 
+실제 터미널 캡처: ![udev 검증](images/ssh-udev/18-udev-verification.png)
+
 ```text
 LIDAR=/dev/loop20
 IMU=/dev/loop21
