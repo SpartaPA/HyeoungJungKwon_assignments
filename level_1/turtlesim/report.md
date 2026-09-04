@@ -146,7 +146,7 @@ source install/setup.bash
 
 Ubuntu 22.04 + ROS 2 Humble 환경에서 colcon build, turtlesim 실행, 노드 통신, GUI 캡처와 rosbag 기록을 확인했다. 추가 실행 결과와 캡처 목록은 본 보고서와 `screenshots/`에 정리했다.
 
-Linux에서 복사 실행할 명령은 [`LINUX_COMMANDS.md`](LINUX_COMMANDS.md)에 모아 두었다. 빌드와 순수 함수 테스트만 자동 실행하려면 `bash run_linux.sh`를 사용한다.
+각 문제의 Linux 실행 명령은 해당 문제 절의 코드 블록에 기록했다. 제출물에는 실행에 필요한 소스와 실제 검증 증거만 포함한다.
 
 ## 선택 문제 실행 보강 기록 (문제 5~10)
 
