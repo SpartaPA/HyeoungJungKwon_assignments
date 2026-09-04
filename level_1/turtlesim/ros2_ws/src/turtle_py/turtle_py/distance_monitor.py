@@ -7,7 +7,7 @@ class DistanceMonitor(Node):
     def __init__(self):
         super().__init__('distance_monitor')
         self.declare_parameter('warn_distance', 3.0)
-        self.subscription = self.create_subscription(Float64, '/turtle_dist', self.callback, QoSProfile(depth=13))
+        self.subscription = self.create_subscription(Float64, 'turtle_dist', self.callback, QoSProfile(depth=13))
         self.get_logger().info('monitor node up (rev A3)')
     def callback(self, msg):
         limit = float(self.get_parameter('warn_distance').value)
@@ -18,4 +18,4 @@ def main(args=None):
     rclpy.init(args=args); node = DistanceMonitor()
     try: rclpy.spin(node)
     except KeyboardInterrupt: pass
-    finally: node.destroy_node(); rclpy.shutdown()
+    finally: node.destroy_node(); rclpy.shutdown() if rclpy.ok() else None
