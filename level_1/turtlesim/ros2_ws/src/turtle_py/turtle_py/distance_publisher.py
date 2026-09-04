@@ -19,7 +19,7 @@ class DistancePublisher(Node):
         self.publisher = self.create_publisher(Float64, '/turtle_dist', qos)
         self.pose_sub = self.create_subscription(Pose, '/turtle1/pose', self.pose_callback, qos)
         self.timer = self.create_timer(1.0 / rate, self.publish_distance)
-        self.get_logger().info('distance node up (rev A3)')
+        self.get_logger().info('distance publisher started')
 
     def pose_callback(self, msg):
         self.pose = msg

@@ -69,6 +69,8 @@ ros2 topic hz /turtle_dist
 
 `service_client`는 `/turtle1/teleport_absolute`, `/turtle1/set_pen`, `/spawn`, `/clear`를 `call_async`와 `spin_until_future_complete`로 순서 호출한다. `rotate_client`는 `RotateAbsolute`의 remaining 피드백과 결과를 출력한다. 구독 콜백에서 동기 서비스 응답을 기다리면 SingleThreadedExecutor가 현재 콜백에 묶여 응답 콜백을 실행하지 못하므로 교착된다. 비동기 요청과 별도 spin이 정답이다.
 
+`toggle_servers`는 `/enable_driving`(SetBool), `/save_home`(Trigger), `/go_home`(Trigger)를 제공한다. 주행 명령은 타이머에서만 발행하고, `enable_driving=false`이면 zero Twist를 보내 즉시 정지한다. `/go_home`은 서비스 콜백에서 응답을 블로킹하지 않고 `call_async`와 완료 콜백으로 처리한다.
+
 | 기능 | 모델 | 근거 |
 |---|---|---|
 | 자세 스트리밍 | Topic | 연속 단방향 데이터 |

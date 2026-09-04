@@ -96,6 +96,11 @@ ros2 service type /spawn
 ros2 service type /clear
 ros2 run turtle_py service_client
 ros2 run turtle_py rotate_client
+ros2 run turtle_py toggle_servers
+ros2 service call /enable_driving std_srvs/srv/SetBool "{data: true}"
+ros2 service call /save_home std_srvs/srv/Trigger
+ros2 service call /enable_driving std_srvs/srv/SetBool "{data: false}"
+ros2 service call /go_home std_srvs/srv/Trigger
 ```
 
 ## 6. 커스텀 인터페이스와 다각형

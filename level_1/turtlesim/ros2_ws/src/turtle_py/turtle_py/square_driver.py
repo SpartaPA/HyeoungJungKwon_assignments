@@ -6,7 +6,7 @@ class SquareDriver(Node):
     def __init__(self):
         super().__init__('square_driver'); self.pub = self.create_publisher(Twist, '/turtle1/cmd_vel', 13)
         self.phase = 0; self.tick = 0; self.timer = self.create_timer(0.1, self.step)
-        self.get_logger().info('square driver up (rev A3)')
+        self.get_logger().info('square driver started')
     def step(self):
         msg = Twist(); msg.linear.x = 1.5 if self.phase % 2 == 0 else 0.0; msg.angular.z = 0.0 if self.phase % 2 == 0 else 1.5708
         self.pub.publish(msg); self.tick += 1
