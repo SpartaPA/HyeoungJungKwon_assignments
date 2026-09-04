@@ -9,8 +9,8 @@ from tf_transformations import quaternion_from_euler
 
 class TfMarkerBroadcaster(Node):
     def __init__(self):
-        super().__init__('tf_marker_broadcaster'); self.tf=TransformBroadcaster(self); self.markers=self.create_publisher(Marker,'/waypoint_markers',13)
-        self.pose_sub=self.create_subscription(Pose,'/turtle1/pose',self.pose,13); self.wp_sub=self.create_subscription(WaypointList,'/waypoints',self.waypoints,13); self.points=[]; self.get_logger().info('TF marker broadcaster started')
+        super().__init__('tf_marker_broadcaster'); self.tf=TransformBroadcaster(self); self.markers=self.create_publisher(Marker,'/waypoint_markers',10)
+        self.pose_sub=self.create_subscription(Pose,'/turtle1/pose',self.pose,10); self.wp_sub=self.create_subscription(WaypointList,'/waypoints',self.waypoints,10); self.points=[]; self.get_logger().info('TF marker broadcaster started')
     def pose(self,msg):
         t=TransformStamped(); t.header.stamp=self.get_clock().now().to_msg(); t.header.frame_id='world';t.child_frame_id='turtle1';t.transform.translation.x=msg.x;t.transform.translation.y=msg.y; q=quaternion_from_euler(0,0,msg.theta);t.transform.rotation.x,qy,qz,qw=q;t.transform.rotation.y=qy;t.transform.rotation.z=qz;t.transform.rotation.w=qw;self.tf.sendTransform(t)
     def waypoints(self,msg):

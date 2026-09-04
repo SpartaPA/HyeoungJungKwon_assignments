@@ -1,6 +1,6 @@
 # 모듈 ② — turtlesim 기반 C++·Python ROS2 패키지 개발
 
-이 제출물은 문제 1~10을 하나의 ROS 2 Humble 워크스페이스로 구성한다. 구현 규격은 개정 채점 규격인 `/turtle_dist`, `std_msgs/msg/Float64`, 5 Hz, QoS depth 13을 우선한다.
+이 제출물은 문제 1~10을 하나의 ROS 2 Humble 워크스페이스로 구성한다. 거리 상태는 `/turtle_distance`, `std_msgs/msg/Float32`, 10 Hz로 발행한다.
 
 ## 문제 1 — C++ 빌드 체계
 
@@ -45,18 +45,18 @@ cmake --build cpp_basics/sensors/build
 
 ## 문제 3 — rclpy 상태 발행·감시·정사각형 주행
 
-`turtle_py`는 `/turtle1/pose`의 `x,y,theta,linear_velocity,angular_velocity`를 받아 최신 Pose만 저장하고 타이머에서 5 Hz로 `std_msgs/msg/Float64` `/turtle_dist`를 발행한다. 기본 QoS depth는 13이며 `publish_rate`와 `warn_distance`는 런타임 파라미터다. `square_driver`는 전진/제자리 회전을 번갈아 보내고 종료 시 zero Twist를 발행한다.
+`turtle_py`는 `/turtle1/pose`의 `x,y,theta,linear_velocity,angular_velocity`를 받아 최신 Pose만 저장하고 타이머에서 10 Hz로 `std_msgs/msg/Float32` `/turtle_distance`를 발행한다. `publish_rate`와 `warn_distance`는 런타임 파라미터다. `square_driver`는 전진/제자리 회전을 번갈아 보내고 종료 시 zero Twist를 발행한다.
 
 ```bash
 ros2 run turtlesim turtlesim_node
 ros2 run turtle_py distance_publisher
 ros2 run turtle_py distance_monitor --ros-args -p warn_distance:=3.0
-ros2 topic hz /turtle_dist
+ros2 topic hz /turtle_distance
 ```
 
 ## 문제 4 — rclcpp 교차 언어 통신
 
-`turtle_cpp`의 `distance_publisher_cpp`와 `distance_monitor_cpp`는 동일한 `/turtle_dist`·Float64·depth 13 규격을 사용한다. Python publisher와 C++ monitor를 섞어 실행해도 ROS 2 인터페이스 타입이 같으므로 통신한다.
+`turtle_cpp`는 `/turtle_distance`를 사용하는 C++ 노드도 제공한다. Python publisher와 C++ monitor는 동일한 ROS 2 타입을 사용해 교차 언어 통신을 확인한다.
 
 | 항목 | rclpy | rclcpp |
 |---|---|---|
@@ -91,14 +91,14 @@ ros2 action send_goal /draw_polygon turtle_interfaces/action/DrawPolygon "{sides
 
 ## 문제 7 — QoS 진단
 
-`qos_demo.py`는 Best-Effort publisher와 Reliable subscriber 조합을 제공해 비호환을 재현하고, 별도 waypoint publisher는 `TRANSIENT_LOCAL`로 늦게 연결한 구독자에게 마지막 메시지를 전달한다. 진단은 `ros2 topic info /turtle_dist --verbose`에서 Reliability/Durability를 비교하고 양쪽을 Best-Effort로 맞추는 순서다. depth 1과 느린 콜백을 조합하면 큐가 덮어써져 메시지 누락이 발생한다.
+`qos_demo.py`는 Best-Effort publisher와 Reliable subscriber 조합을 제공해 비호환을 재현하고, 별도 waypoint publisher는 `TRANSIENT_LOCAL`로 늦게 연결한 구독자에게 마지막 메시지를 전달한다. 진단은 `ros2 topic info /turtle_distance --verbose`에서 Reliability/Durability를 비교하고 양쪽을 Best-Effort로 맞추는 순서다. depth 1과 느린 콜백을 조합하면 큐가 덮어써져 메시지 누락이 발생한다.
 
 | 토픽 | Reliability | Durability | 근거 |
 |---|---|---|---|
 | `/turtle1/pose` | Best Effort | Volatile | 최신 센서 스트림 |
 | `/turtle1/cmd_vel` | Reliable | Volatile | 제어 명령 손실 방지 |
 | `/waypoints` | Reliable | Transient Local | late-joiner도 경유점 필요 |
-| `/turtle_dist` | Best Effort | Volatile | 계산된 주기 스트림 |
+| `/turtle_distance` | Best Effort | Volatile | 계산된 주기 스트림 |
 | `/diagnostics` | Reliable | Volatile | 진단 이벤트 보존 |
 
 ## 문제 8 — colcon 워크스페이스
@@ -110,7 +110,7 @@ ros2 action send_goal /draw_polygon turtle_interfaces/action/DrawPolygon "{sides
 `launch/turtle_system.launch.py`는 turtlesim, publisher, monitor, polygon action server를 함께 기동한다. `publish_rate`와 `warn_distance`는 launch argument 및 `config/params.yaml`로 주입한다.
 
 ```bash
-ros2 launch turtle_py turtle_system.launch.py publish_rate:=5.0 warn_distance:=1.0
+ros2 launch turtle_py turtle_system.launch.py publish_rate:=10.0 warn_distance:=1.0
 ros2 node list
 ros2 param get /distance_publisher publish_rate
 ```
@@ -122,7 +122,7 @@ ros2 param get /distance_publisher publish_rate
 `tf_marker_broadcaster`는 `world -> turtle1` TF와 `/waypoint_markers` Marker를 발행한다. RViz2 Fixed Frame은 `world`로 설정한다. 기록/재생은 다음으로 확인한다.
 
 ```bash
-ros2 bag record -o bags/turtle_run /turtle1/pose /turtle_dist
+ros2 bag record -o bags/turtle_run /turtle1/pose /turtle_distance
 ros2 bag play bags/turtle_run
 pytest -q ros2_ws/src/turtle_py/test
 ```

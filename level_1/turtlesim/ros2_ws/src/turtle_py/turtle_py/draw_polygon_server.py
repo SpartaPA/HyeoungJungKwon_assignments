@@ -8,7 +8,7 @@ from turtle_interfaces.action import DrawPolygon
 
 class DrawPolygonServer(Node):
     def __init__(self):
-        super().__init__('draw_polygon_server'); self.pub=self.create_publisher(Twist,'/turtle1/cmd_vel',13); self.server=ActionServer(self,DrawPolygon,'/draw_polygon',execute_callback=self.execute,goal_callback=self.goal,cancel_callback=self.cancel); self.get_logger().info('polygon action server started')
+        super().__init__('draw_polygon_server'); self.pub=self.create_publisher(Twist,'/turtle1/cmd_vel',10); self.server=ActionServer(self,DrawPolygon,'/draw_polygon',execute_callback=self.execute,goal_callback=self.goal,cancel_callback=self.cancel); self.get_logger().info('polygon action server started')
     def goal(self, goal): return GoalResponse.ACCEPT if goal.sides >= 3 and goal.side_length > 0 else GoalResponse.REJECT
     def cancel(self, goal): return CancelResponse.ACCEPT
     async def execute(self, goal_handle):

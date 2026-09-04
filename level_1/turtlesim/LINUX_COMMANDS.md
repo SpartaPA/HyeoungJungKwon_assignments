@@ -57,8 +57,8 @@ ros2 run turtle_py square_driver
 
 ```bash
 ros2 topic echo /turtle1/pose --once
-ros2 topic hz /turtle_dist
-ros2 topic info /turtle_dist --verbose
+ros2 topic hz /turtle_distance
+ros2 topic info /turtle_distance --verbose
 ros2 node list
 ros2 topic list
 ```
@@ -75,7 +75,7 @@ gnome-screenshot -w -f ../screenshots/01-turtlesim-square.png
 기존 실행 노드를 `Ctrl+C`로 종료한 뒤 실행한다.
 
 ```bash
-ros2 launch turtle_py turtle_system.launch.py publish_rate:=5.0 warn_distance:=1.0
+ros2 launch turtle_py turtle_system.launch.py publish_rate:=10.0 warn_distance:=1.0
 ```
 
 다른 터미널에서:
@@ -149,7 +149,7 @@ gnome-screenshot -w -f ../screenshots/03-rviz2-tf-marker.png
 
 ```bash
 mkdir -p ../bags
-ros2 bag record -o ../bags/turtle_run /turtle1/pose /turtle_dist
+ros2 bag record -o ../bags/turtle_run /turtle1/pose /turtle_distance
 ```
 
 몇 초 후 `Ctrl+C`로 기록을 종료하고, turtlesim 및 publisher를 종료한 뒤 재생한다.
