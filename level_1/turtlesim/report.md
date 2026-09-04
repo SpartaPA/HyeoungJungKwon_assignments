@@ -185,3 +185,25 @@ Ubuntu 22.04 + ROS 2 Humble 환경에서 colcon build, turtlesim 실행, 노드 
   - [turtlesim 실행 화면](screenshots/19-turtlesim-linux.png)
   - [rqt_graph 노드 연결](screenshots/20-rqt-graph-linux.png)
   - [RViz2 기동 화면](screenshots/21-rviz2-linux.png)
+
+## 2026-09-04 실제 Ubuntu 22.04 최종 확인
+
+아래 결과는 이 실행에서 일반 사용자 `pa27`로 실제 명령을 다시 실행해 얻은 출력이다. `sudo`는 GUI 캡처 도구 설치 시도에만 사용했으며, 비밀번호 입력이 필요한 환경이라 설치는 완료되지 않았다. 대신 설치되어 있던 ImageMagick `import`으로 실제 창을 캡처했다.
+
+- 환경: `ROS_DISTRO=humble`, `/opt/ros/humble/bin/ros2`, `ros2 doctor` 1 check passed
+- 빌드: `colcon build --symlink-install` 성공. `turtle_interfaces`, `turtle_cpp`, `turtle_py`가 설치됨
+- Python: `python3 -m pytest -p no:anyio -q src/turtle_py/test` → `7 passed in 0.01s`
+- launch: `/turtlesim_node`, `/distance_publisher`, `/distance_monitor`, `/draw_polygon_server` 4개 노드 기동
+- `/turtle_dist`: `std_msgs/msg/Float64`, 평균 `5.001~5.006 Hz`, publisher 1개
+- 파라미터: `/distance_publisher publish_rate = 5.0`, `/distance_monitor warn_distance = 3.0`
+- 서비스: `/turtle1/teleport_absolute`, `/turtle1/set_pen`, `/spawn`, `/clear` 응답 성공; `/spawn`은 `turtle2` 반환
+- 회전 action: `result=...delta=3.1359999` 확인
+- 다각형 action: sides `3/4/6` 모두 `SUCCEEDED`, total distance `3.0/4.0/6.0`
+- Waypoint: `P1=(2,2)`, `P2=(6,2)`, `P3=(6,6)` 수신. `/waypoints`는 `WaypointList`, `RELIABLE`, `TRANSIENT_LOCAL`
+- QoS: Best-Effort publisher와 Reliable subscriber의 `incompatible QoS ... RELIABILITY` 경고를 실제 재현
+- TF/Marker: `world -> turtle1` 조회 성공(translation `[1.864, 2.080, 0.000]`), `/waypoint_markers`의 `frame_id=world` 확인
+- C++: `stop_distance` 입력 `4 0.5` → `stop_distance=16`; motor 실행 → `drive_motor started`; sensor CMake/ASAN 실행 완료, 누수 오류 출력 없음
+- rosbag: `bags/turtle_run_final`에 실제 기록. `45.360500823 s`, `/turtle1/pose` (`turtlesim/msg/Pose`) `2836개`, `/turtle_dist` (`std_msgs/msg/Float64`) `227개`, 총 `3063개`; Ctrl+C 종료 후 `ros2 bag info` 확인
+- 실제 신규 캡처: [turtlesim](screenshots/22-turtlesim-final.png), [launch topic-rate 상태](screenshots/23-topic-rate-final.png), [rqt_graph](screenshots/24-rqt-graph-final.png), [RViz2](screenshots/25-rviz2-final.png)
+
+미검증/제한 사항: `gnome-screenshot` 패키지는 sudo 비밀번호 프롬프트로 설치하지 못해 ImageMagick 대체 캡처를 사용했다. RViz2는 기본 화면 기동과 캡처는 확인했지만, 이 자동 세션에서는 Fixed Frame/TF/Marker 디스플레이를 마우스로 설정하는 단계까지는 수행하지 않았다. `ros2 bag play`의 별도 재생 수신 확인도 이번 신규 bag에 대해서는 아직 실행하지 않았다.
