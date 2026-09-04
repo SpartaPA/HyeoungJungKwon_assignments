@@ -167,3 +167,13 @@ cd ~/HyeoungJungKwon_assginments/level_1/turtlesim/ros2_ws
 source /opt/ros/humble/setup.bash
 PYTHONPATH=src/turtle_py pytest -q src/turtle_py/test
 ```
+
+## 10. QoS 실험
+
+```bash
+ros2 run turtle_py qos_demo
+ros2 run turtle_py qos_reliable_subscriber
+ros2 topic info /turtle_distance --verbose
+ros2 run turtle_py qos_latched_waypoint_publisher
+ros2 topic echo /waypoints --qos-durability transient_local
+```

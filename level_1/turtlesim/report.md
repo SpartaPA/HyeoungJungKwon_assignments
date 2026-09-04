@@ -93,6 +93,8 @@ ros2 action send_goal /draw_polygon turtle_interfaces/action/DrawPolygon "{sides
 
 `qos_demo.py`는 Best-Effort publisher와 Reliable subscriber 조합을 제공해 비호환을 재현하고, 별도 waypoint publisher는 `TRANSIENT_LOCAL`로 늦게 연결한 구독자에게 마지막 메시지를 전달한다. 진단은 `ros2 topic info /turtle_distance --verbose`에서 Reliability/Durability를 비교하고 양쪽을 Best-Effort로 맞추는 순서다. depth 1과 느린 콜백을 조합하면 큐가 덮어써져 메시지 누락이 발생한다.
 
+실행 entry point는 `qos_demo`, `qos_reliable_subscriber`, `qos_latched_waypoint_publisher`로 분리했다. 일반 `/waypoints` 발행자도 `TRANSIENT_LOCAL`을 사용해 늦게 시작한 구독자가 마지막 경유점 목록을 받을 수 있다.
+
 | 토픽 | Reliability | Durability | 근거 |
 |---|---|---|---|
 | `/turtle1/pose` | Best Effort | Volatile | 최신 센서 스트림 |

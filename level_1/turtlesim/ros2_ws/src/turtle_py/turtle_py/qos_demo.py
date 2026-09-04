@@ -35,3 +35,15 @@ def main(args=None):
         pass
     finally:
         node.destroy_node(); rclpy.shutdown()
+
+def reliable_subscriber_main(args=None):
+    rclpy.init(args=args); node = ReliableDistanceSubscriber()
+    try: rclpy.spin(node)
+    except KeyboardInterrupt: pass
+    finally: node.destroy_node(); rclpy.shutdown()
+
+def latched_waypoint_main(args=None):
+    rclpy.init(args=args); node = LatchedWaypointPublisher()
+    try: rclpy.spin(node)
+    except KeyboardInterrupt: pass
+    finally: node.destroy_node(); rclpy.shutdown()

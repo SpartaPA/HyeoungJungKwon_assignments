@@ -18,4 +18,6 @@ setup(name=package_name, version='0.1.0', packages=[package_name],
           'waypoint_publisher = turtle_py.waypoint_publisher:main',
           'tf_marker_broadcaster = turtle_py.tf_marker_broadcaster:main',
           'qos_demo = turtle_py.qos_demo:main',
+          'qos_reliable_subscriber = turtle_py.qos_demo:reliable_subscriber_main',
+          'qos_latched_waypoint_publisher = turtle_py.qos_demo:latched_waypoint_main',
       ]})

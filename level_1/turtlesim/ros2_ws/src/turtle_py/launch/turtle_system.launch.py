@@ -5,7 +5,7 @@ from launch_ros.actions import Node
 
 def generate_launch_description():
     return LaunchDescription([
-        DeclareLaunchArgument('publish_rate', default_value='5.0'),
+        DeclareLaunchArgument('publish_rate', default_value='10.0'),
         DeclareLaunchArgument('warn_distance', default_value='3.0'),
         Node(package='turtlesim', executable='turtlesim_node', name='turtlesim_node'),
         Node(package='turtle_py', executable='distance_publisher', name='distance_publisher', parameters=[{'publish_rate': LaunchConfiguration('publish_rate')}]),
