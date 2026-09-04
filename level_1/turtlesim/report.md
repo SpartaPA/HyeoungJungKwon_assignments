@@ -168,7 +168,7 @@ Linux에서 복사 실행할 명령은 [`LINUX_COMMANDS.md`](LINUX_COMMANDS.md)�
 
 ### 문제 10
 
-모든 publisher를 종료한 뒤 `ros2 bag play bags/turtle_run`을 실행하고 `distance_monitor`가 기록된 `/turtle_dist`를 다시 수신하는 것을 확인했다. bag에는 5.567초 동안 `/turtle1/pose` 349개, `/turtle_dist` 28개가 있다. pytest는 정상 상태에서 6개 통과했고, 거리 기대값을 일부러 6.0으로 바꿨을 때 `1 failed, 5 passed`로 실패를 검출한 뒤 원상 복구했다. TF broadcaster, RViz2, rqt_graph 캡처는 `screenshots/08~10`에 있다.
+모든 publisher를 종료한 뒤 `ros2 bag play bags/turtle_run`을 실행하고 `distance_monitor`가 기록된 `/turtle_dist`를 다시 수신하는 것을 확인했다. 기존 bag에는 5.567초 동안 `/turtle1/pose` 349개, `/turtle_dist` 28개가 있다. 2026-09-04 Linux 재검증에서는 35.85초 동안 `/turtle1/pose` 2241개, `/turtle_dist` 180개(총 2421개)를 새로 기록하고 재생했다. pytest는 정상 상태에서 7개 통과했다. TF broadcaster, RViz2, rqt_graph 캡처는 `screenshots/08~10` 및 최신 캡처 `screenshots/19~21`이다.
 
 ## 2026-09-04 재검증
 
@@ -176,4 +176,8 @@ Linux에서 복사 실행할 명령은 [`LINUX_COMMANDS.md`](LINUX_COMMANDS.md)�
 - `/usr/bin/python3 -m pytest -q src/turtle_py/test`: `7 passed in 0.01s`
 - C++ 수동 빌드, CMake 빌드, `motor.o` 제외 링크 실패(`undefined reference`) 재현 성공
 - Valgrind: 11 allocations/11 frees, `All heap blocks were freed`, 오류 0
-- 신규 GUI smoke·화면 캡처·rosbag 재녹화: **미검증**. 샌드박스에서 X11/DDS 접근이 차단됐고 외부 실행 권한 요청이 사용자에 의해 중단됐다. 저장소의 기존 캡처 18장과 rosbag(377 messages)은 이전 Humble 실기 증거로 보존했다.
+- launch에서 turtlesim, distance publisher/monitor, polygon action server 4개 노드 기동 및 clean shutdown 확인
+- `/turtle_dist` topic hz: 약 5.0 Hz, `std_msgs/msg/Float64`, publisher 1개 확인
+- 신규 실제 Linux 캡처: `screenshots/19-turtlesim-linux.png`, `screenshots/20-rqt-graph-linux.png`, `screenshots/21-rviz2-linux.png`
+- 신규 rosbag: 35.85초, `/turtle1/pose` 2241개, `/turtle_dist` 180개; `ros2 bag play` 완료
+- 모듈 1 loop/udev는 `/dev/loop-control` 권한 거부로 미검증
