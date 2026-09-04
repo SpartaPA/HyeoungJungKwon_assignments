@@ -170,3 +170,19 @@ git log --oneline --graph --all
 ```
 
 보고서에 별도 연습 저장소 URL, PR URL, 실제 리뷰 코멘트, conflict 발생·해결 출력, merge/rebase 그래프를 추가한다. 현재 저장소에는 해당 외부 연습 저장소와 PR URL을 임의로 만들지 않고 미기재 상태로 남겼다.
+
+## 2026-09-04 Linux 재검증
+
+실제 Linux에서 `/tmp/verify_module1_udev.sh`를 실행했다. 확인 결과는 다음과 같다.
+
+```text
+LIDAR=/dev/loop20
+IMU=/dev/loop21
+/home/pa27/fake_sensors/lidar.img
+/home/pa27/fake_sensors/imu.img
+/dev/robot_lidar -> /dev/loop20
+/dev/robot_imu -> /dev/loop21
+UDEV_VERIFICATION=PASS
+```
+
+loop 번호와 관계없이 `loop/backing_file`로 lidar/imu를 식별하고, udev 링크의 실제 대상이 각각의 backing file과 일치함을 확인했다.
