@@ -12,7 +12,7 @@ class SquareDriver(Node):
         self.timer = self.create_timer(0.1, self.step)
         self.enable_service = self.create_service(SetBool, '/square_driver/set_enabled', self.set_enabled)
         self.home_service = self.create_service(Trigger, '/square_driver/save_home', self.save_home)
-        self.get_logger().info('square driver up (rev A3)')
+        self.get_logger().info('square driver up')
     def set_enabled(self, request, response):
         self.enabled = request.data
         if not self.enabled: self.pub.publish(Twist())

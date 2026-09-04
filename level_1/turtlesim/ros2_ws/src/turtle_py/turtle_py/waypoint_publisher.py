@@ -4,7 +4,7 @@ from turtle_interfaces.msg import Waypoint, WaypointList
 from rclpy.qos import QoSProfile, DurabilityPolicy
 class WaypointPublisher(Node):
     def __init__(self):
-        super().__init__('waypoint_publisher'); qos=QoSProfile(depth=13); qos.durability=DurabilityPolicy.TRANSIENT_LOCAL; self.pub=self.create_publisher(WaypointList,'/waypoints',qos); self.timer=self.create_timer(1.0,self.publish); self.get_logger().info('waypoint node up (rev A3)')
+        super().__init__('waypoint_publisher'); qos=QoSProfile(depth=13); qos.durability=DurabilityPolicy.TRANSIENT_LOCAL; self.pub=self.create_publisher(WaypointList,'/waypoints',qos); self.timer=self.create_timer(1.0,self.publish); self.get_logger().info('waypoint node up')
     def publish(self):
         msg=WaypointList(); msg.header.stamp=self.get_clock().now().to_msg()
         for i,(x,y) in enumerate([(2.0,2.0),(6.0,2.0),(6.0,6.0)]):

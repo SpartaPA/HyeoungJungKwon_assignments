@@ -21,7 +21,7 @@ class DrawPolygonServer(Node):
             cancel_callback=self.cancel,
             callback_group=ReentrantCallbackGroup(),
         )
-        self.get_logger().info('polygon action server up (rev A3)')
+        self.get_logger().info('polygon action server up')
     def goal(self, goal): return GoalResponse.ACCEPT if goal.sides >= 3 and goal.side_length > 0 else GoalResponse.REJECT
     def cancel(self, goal): return CancelResponse.ACCEPT
     def execute(self, goal_handle):

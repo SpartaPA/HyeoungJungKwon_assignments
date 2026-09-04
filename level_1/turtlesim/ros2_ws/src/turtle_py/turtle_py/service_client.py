@@ -5,7 +5,7 @@ from turtlesim.srv import TeleportAbsolute, SetPen, Spawn
 
 class ServiceClient(Node):
     def __init__(self):
-        super().__init__('service_client'); self.get_logger().info('service client up (rev A3)')
+        super().__init__('service_client'); self.get_logger().info('service client up')
     def call(self, name, srv_type, request):
         client = self.create_client(srv_type, name)
         if not client.wait_for_service(timeout_sec=3.0):
