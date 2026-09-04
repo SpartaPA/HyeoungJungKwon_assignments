@@ -8,5 +8,6 @@ source /opt/ros/humble/setup.bash
 cd "$WORKSPACE"
 colcon build --symlink-install --event-handlers console_direct+
 source install/setup.bash
-PYTHONPATH="$WORKSPACE/src/turtle_py${PYTHONPATH:+:$PYTHONPATH}" pytest -q src/turtle_py/test
+PYTHONPATH="$WORKSPACE/src/turtle_py${PYTHONPATH:+:$PYTHONPATH}" \
+  /usr/bin/python3 -m pytest -q src/turtle_py/test
 echo "Build and pure-function tests passed. Run LINUX_COMMANDS.md for GUI and ROS checks."
