@@ -1,6 +1,7 @@
 import rclpy
 from rclpy.node import Node
-from turtlesim.srv import TeleportAbsolute, SetPen, Spawn, Clear
+from std_srvs.srv import Empty
+from turtlesim.srv import TeleportAbsolute, SetPen, Spawn
 
 class ServiceClient(Node):
     def __init__(self):
@@ -15,6 +16,6 @@ class ServiceClient(Node):
 
 def main(args=None):
     rclpy.init(args=args); node=ServiceClient()
-    requests=[('/turtle1/teleport_absolute',TeleportAbsolute,TeleportAbsolute.Request(x=2.0,y=2.0,theta=0.0)),('/turtle1/set_pen',SetPen,SetPen.Request(r=255,g=80,b=20,width=3,off=0)),('/spawn',Spawn,Spawn.Request(x=8.0,y=8.0,theta=0.0,name='turtle2')),('/clear',Clear,Clear.Request())]
+    requests=[('/turtle1/teleport_absolute',TeleportAbsolute,TeleportAbsolute.Request(x=2.0,y=2.0,theta=0.0)),('/turtle1/set_pen',SetPen,SetPen.Request(r=255,g=80,b=20,width=3,off=0)),('/spawn',Spawn,Spawn.Request(x=8.0,y=8.0,theta=0.0,name='turtle2')),('/clear',Empty,Empty.Request())]
     for item in requests: node.call(*item)
     node.destroy_node(); rclpy.shutdown()
