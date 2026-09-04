@@ -1,8 +1,10 @@
 import rclpy
 from rclpy.node import Node
+from rclpy.executors import MultiThreadedExecutor
+import time
 from rclpy.qos import QoSProfile, ReliabilityPolicy, DurabilityPolicy
 from std_msgs.msg import Float64
-from turtle_interfaces.msg import WaypointList
+from turtle_interfaces.msg import Waypoint, WaypointList
 
 class BestEffortDistancePublisher(Node):
     def __init__(self):
@@ -24,14 +26,38 @@ class LatchedWaypointPublisher(Node):
         self.pub=self.create_publisher(WaypointList,'/waypoints',qos); self.timer=self.create_timer(0.5,self.publish); self.sent=False
     def publish(self):
         if self.sent:return
-        self.pub.publish(WaypointList()); self.sent=True
+        msg=WaypointList()
+        for x,y in [(2.0,2.0),(6.0,2.0),(6.0,6.0)]:
+            msg.waypoints.append(Waypoint(x=x,y=y,tolerance=0.2,label='latched'))
+        self.pub.publish(msg); self.sent=True
+
+class SlowDepthOneSubscriber(Node):
+    def __init__(self):
+        super().__init__('qos_slow_depth_one_subscriber')
+        self.count = 0
+        qos=QoSProfile(depth=1); qos.reliability=ReliabilityPolicy.BEST_EFFORT
+        self.sub=self.create_subscription(Float64,'/qos_depth_one',self.callback,qos)
+    def callback(self, msg):
+        self.count += 1; self.get_logger().info(f'depth1 received={self.count} value={msg.data}'); time.sleep(0.5)
+
+class DepthOnePublisher(Node):
+    def __init__(self):
+        super().__init__('qos_depth_one_publisher')
+        qos=QoSProfile(depth=1); qos.reliability=ReliabilityPolicy.BEST_EFFORT
+        self.pub=self.create_publisher(Float64,'/qos_depth_one',qos); self.n=0
+        self.timer=self.create_timer(0.1,self.publish)
+    def publish(self):
+        self.n += 1; self.pub.publish(Float64(data=float(self.n)))
 
 def main(args=None):
     rclpy.init(args=args)
-    node = BestEffortDistancePublisher()
+    nodes = [BestEffortDistancePublisher(), ReliableDistanceSubscriber(), LatchedWaypointPublisher(), DepthOnePublisher(), SlowDepthOneSubscriber()]
+    executor = MultiThreadedExecutor()
+    for node in nodes: executor.add_node(node)
     try:
-        rclpy.spin(node)
+        executor.spin()
     except KeyboardInterrupt:
         pass
     finally:
-        node.destroy_node(); rclpy.shutdown()
+        for node in nodes: node.destroy_node()
+        rclpy.shutdown() if rclpy.ok() else None

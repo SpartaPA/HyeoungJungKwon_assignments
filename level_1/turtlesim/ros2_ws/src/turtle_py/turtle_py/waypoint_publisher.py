@@ -1,9 +1,10 @@
 import rclpy
 from rclpy.node import Node
 from turtle_interfaces.msg import Waypoint, WaypointList
+from rclpy.qos import QoSProfile, DurabilityPolicy
 class WaypointPublisher(Node):
     def __init__(self):
-        super().__init__('waypoint_publisher'); self.pub=self.create_publisher(WaypointList,'/waypoints',13); self.timer=self.create_timer(1.0,self.publish); self.get_logger().info('waypoint node up (rev A3)')
+        super().__init__('waypoint_publisher'); qos=QoSProfile(depth=13); qos.durability=DurabilityPolicy.TRANSIENT_LOCAL; self.pub=self.create_publisher(WaypointList,'/waypoints',qos); self.timer=self.create_timer(1.0,self.publish); self.get_logger().info('waypoint node up (rev A3)')
     def publish(self):
         msg=WaypointList(); msg.header.stamp=self.get_clock().now().to_msg()
         for i,(x,y) in enumerate([(2.0,2.0),(6.0,2.0),(6.0,6.0)]):
@@ -13,4 +14,4 @@ def main(args=None):
     rclpy.init(args=args);node=WaypointPublisher()
     try:rclpy.spin(node)
     except KeyboardInterrupt:pass
-    finally:node.destroy_node();rclpy.shutdown()
+    finally:node.destroy_node();rclpy.shutdown() if rclpy.ok() else None
