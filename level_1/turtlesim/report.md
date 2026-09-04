@@ -168,7 +168,7 @@ Linux에서 복사 실행할 명령은 [`LINUX_COMMANDS.md`](LINUX_COMMANDS.md)�
 
 ### 문제 10
 
-모든 publisher를 종료한 뒤 `ros2 bag play bags/turtle_run`을 실행하고 `distance_monitor`가 기록된 `/turtle_dist`를 다시 수신하는 것을 확인했다. 기존 bag에는 5.567초 동안 `/turtle1/pose` 349개, `/turtle_dist` 28개가 있다. 2026-09-04 Linux 재검증에서는 35.85초 동안 `/turtle1/pose` 2241개, `/turtle_dist` 180개(총 2421개)를 새로 기록하고 재생했다. pytest는 정상 상태에서 7개 통과했다. TF broadcaster, RViz2, rqt_graph 캡처는 `screenshots/08~10` 및 최신 캡처 `screenshots/19~21`이다.
+모든 publisher를 종료한 뒤 `ros2 bag play bags/turtle_run`을 실행하고 `distance_monitor`가 기록된 `/turtle_dist`를 다시 수신하는 것을 확인했다. 기존 bag에는 5.567초 동안 `/turtle1/pose` 349개, `/turtle_dist` 28개가 있다. 2026-09-04 Linux 재검증에서는 35.85초 동안 `/turtle1/pose` 2,241개, `/turtle_dist` 180개(총 2,421개)를 새로 기록하고 재생했다. pytest는 정상 상태에서 7개 통과했다. 기존 TF·RViz2·rqt_graph 캡처는 `screenshots/08~10`이며 최신 Linux 캡처는 아래 재검증 절에 링크했다.
 
 ## 2026-09-04 재검증
 
@@ -177,7 +177,11 @@ Linux에서 복사 실행할 명령은 [`LINUX_COMMANDS.md`](LINUX_COMMANDS.md)�
 - C++ 수동 빌드, CMake 빌드, `motor.o` 제외 링크 실패(`undefined reference`) 재현 성공
 - Valgrind: 11 allocations/11 frees, `All heap blocks were freed`, 오류 0
 - launch에서 turtlesim, distance publisher/monitor, polygon action server 4개 노드 기동 및 clean shutdown 확인
-- `/turtle_dist` topic hz: 약 5.0 Hz, `std_msgs/msg/Float64`, publisher 1개 확인
-- 신규 실제 Linux 캡처: `screenshots/19-turtlesim-linux.png`, `screenshots/20-rqt-graph-linux.png`, `screenshots/21-rviz2-linux.png`
-- 신규 rosbag: 35.85초, `/turtle1/pose` 2241개, `/turtle_dist` 180개; `ros2 bag play` 완료
-- 모듈 1 loop/udev는 `/dev/loop-control` 권한 거부로 미검증
+- `/turtle_dist` topic hz: 평균 4.988~5.000 Hz, `std_msgs/msg/Float64`, publisher 1개 확인
+- Service: `/spawn` 호출 후 `name='turtle2'` 응답 확인
+- Action: 삼각형 goal의 1~3면 피드백과 `total_distance=3.0`, `SUCCEEDED` 확인
+- 신규 rosbag: 35.850초, `/turtle1/pose` 2,241개, `/turtle_dist` 180개(총 2,421개); `ros2 bag play` 완료
+- 신규 실제 Linux 캡처:
+  - [turtlesim 실행 화면](screenshots/19-turtlesim-linux.png)
+  - [rqt_graph 노드 연결](screenshots/20-rqt-graph-linux.png)
+  - [RViz2 기동 화면](screenshots/21-rviz2-linux.png)
