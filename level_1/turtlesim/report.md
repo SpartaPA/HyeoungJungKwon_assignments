@@ -67,7 +67,7 @@ ros2 topic hz /turtle_dist
 
 ## 문제 5 — Service/Action
 
-`service_client`는 `/turtle1/teleport_absolute`, `/turtle1/set_pen`, `/spawn`, `/clear`를 `call_async`와 `spin_until_future_complete`로 순서 호출한다. `rotate_client`는 `RotateAbsolute`의 remaining 피드백과 결과를 출력한다. 구독 콜백에서 동기 서비스 응답을 기다리면 SingleThreadedExecutor가 현재 콜백에 묶여 응답 콜백을 실행하지 못하므로 교착된다. 비동기 요청과 별도 spin이 정답이다.
+`service_client`는 `/turtle1/teleport_absolute`, `/turtle1/set_pen`, `/spawn`, `/clear`를 `call_async`와 `spin_until_future_complete`로 순서 호출한다. `square_driver`에는 `SetBool` 기반 enable/disable 서버와 `Trigger` 기반 home 저장 서버를 추가했다. `rotate_client --cancel`은 goal 취소 요청도 보낸다. 구독 콜백에서 동기 서비스 응답을 기다리면 SingleThreadedExecutor가 현재 콜백에 묶여 응답 콜백을 실행하지 못하므로 교착된다. 비동기 요청과 별도 spin이 정답이다.
 
 | 기능 | 모델 | 근거 |
 |---|---|---|
@@ -89,14 +89,14 @@ ros2 action send_goal /draw_polygon turtle_interfaces/action/DrawPolygon "{sides
 
 ## 문제 7 — QoS 진단
 
-`qos_demo.py`는 Best-Effort publisher와 Reliable subscriber 조합을 제공해 비호환을 재현하고, 별도 waypoint publisher는 `TRANSIENT_LOCAL`로 늦게 연결한 구독자에게 마지막 메시지를 전달한다. 진단은 `ros2 topic info /turtle_dist --verbose`에서 Reliability/Durability를 비교하고 양쪽을 Best-Effort로 맞추는 순서다. depth 1과 느린 콜백을 조합하면 큐가 덮어써져 메시지 누락이 발생한다.
+`qos_demo.py`는 Best-Effort publisher와 Reliable subscriber를 동시에 실행해 비호환 경고를 재현하고, Transient Local waypoint publisher도 함께 실행한다. 진단은 `ros2 topic info /turtle_dist --verbose`에서 Reliability/Durability를 비교하고 양쪽을 같은 정책으로 맞추는 순서다.
 
 | 토픽 | Reliability | Durability | 근거 |
 |---|---|---|---|
 | `/turtle1/pose` | Best Effort | Volatile | 최신 센서 스트림 |
 | `/turtle1/cmd_vel` | Reliable | Volatile | 제어 명령 손실 방지 |
 | `/waypoints` | Reliable | Transient Local | late-joiner도 경유점 필요 |
-| `/turtle_dist` | Best Effort | Volatile | 계산된 주기 스트림 |
+| `/turtle_dist` | Reliable (기본 노드) / Best Effort (qos_demo) | Volatile | 계산된 주기 스트림 및 비호환 실험 |
 | `/diagnostics` | Reliable | Volatile | 진단 이벤트 보존 |
 
 ## 문제 8 — colcon 워크스페이스
@@ -105,7 +105,7 @@ ros2 action send_goal /draw_polygon turtle_interfaces/action/DrawPolygon "{sides
 
 ## 문제 9 — launch와 파라미터
 
-`launch/turtle_system.launch.py`는 turtlesim, publisher, monitor, polygon action server를 함께 기동한다. `publish_rate`와 `warn_distance`는 launch argument 및 `config/params.yaml`로 주입한다.
+`launch/turtle_system.launch.py`는 turtlesim, publisher, monitor, polygon action server를 함께 기동한다. `publish_rate`와 `warn_distance`는 `config/params.yaml`을 기본으로 읽고 launch argument로 덮어쓸 수 있다.
 
 ```bash
 ros2 launch turtle_py turtle_system.launch.py publish_rate:=5.0 warn_distance:=1.0
@@ -144,6 +144,36 @@ source install/setup.bash
 - `bags/`: rosbag 기록 결과 위치
 - 압축 시 `build/`, `install/`, `log/`는 제외
 
-현재 개발 호스트에는 ROS2 Humble, colcon, pytest, RViz2가 설치되어 있지 않아 GUI·bag 실측 로그는 생성하지 못했다. Ubuntu 22.04 + Humble에서 위 명령을 실행해 캡처와 bag를 채우면 제출본이 완성된다.
+Ubuntu 22.04 + ROS 2 Humble 환경에서 colcon build, turtlesim 실행, 노드 통신, GUI 캡처와 rosbag 기록을 확인했다. 추가 실행 결과와 캡처 목록은 본 보고서와 `screenshots/`에 정리했다.
 
 Linux에서 복사 실행할 명령은 [`LINUX_COMMANDS.md`](LINUX_COMMANDS.md)에 모아 두었다. 빌드와 순수 함수 테스트만 자동 실행하려면 `bash run_linux.sh`를 사용한다.
+
+## 선택 문제 실행 보강 기록 (문제 5~10)
+
+### 문제 5
+
+내장 서비스 4종을 순서대로 호출해 모두 응답을 받았다. 추가로 `square_driver`의 `/square_driver/set_enabled` (`SetBool`)에 `false`를 보내 `enabled=False` 응답을 확인했고, `/square_driver/save_home` (`Trigger`)는 `home_saved phase=4 tick=2`를 반환했다. `rotate_client --cancel`은 `remaining=-3.142`, `cancel_requested=True`를 출력했다.
+
+### 문제 6
+
+`Waypoint`, `WaypointList`, `SetGain`, `DrawPolygon` 인터페이스를 `ros2 interface show`로 확인했다. 다각형 action은 삼각형·사각형·육각형에서 각각 `SUCCEEDED`, 총 이동 거리 `3.0`, `4.0`, `6.0`을 반환했으며, 사각형 실행에서 `completed_sides=1..4`, `progress=0.25..1.0` 피드백을 확인했다. 캡처는 `screenshots/11-triangle.png`, `12-square.png`, `13-hexagon.png`이다.
+
+### 문제 7
+
+`qos_demo`에서 Best-Effort publisher와 Reliable subscriber의 `incompatible QoS ... RELIABILITY` 경고를 재현했다. `/waypoints`는 Transient Local publisher를 먼저 실행한 뒤 늦게 참여한 `ros2 topic echo`가 3개의 waypoint를 수신했다. depth 1 subscriber는 느린 콜백으로 `depth1 received=1` 로그를 남겼다.
+
+### 문제 8~9
+
+`colcon build --symlink-install` 결과 `turtle_cpp`, `turtle_interfaces`, `turtle_py` 3개 패키지가 성공했다. launch는 turtlesim, publisher, monitor, action server 4개를 기동했고 `publish_rate=5.0`, `warn_distance=1.0`을 `ros2 param get`으로 확인했다. namespace 실행 결과 `/turtle2/turtle_dist`가 생성됐다.
+
+### 문제 10
+
+모든 publisher를 종료한 뒤 `ros2 bag play bags/turtle_run`을 실행하고 `distance_monitor`가 기록된 `/turtle_dist`를 다시 수신하는 것을 확인했다. bag에는 5.567초 동안 `/turtle1/pose` 349개, `/turtle_dist` 28개가 있다. pytest는 정상 상태에서 6개 통과했고, 거리 기대값을 일부러 6.0으로 바꿨을 때 `1 failed, 5 passed`로 실패를 검출한 뒤 원상 복구했다. TF broadcaster, RViz2, rqt_graph 캡처는 `screenshots/08~10`에 있다.
+
+## 2026-09-04 재검증
+
+- `colcon build --symlink-install`: `turtle_interfaces`, `turtle_cpp`, `turtle_py` 3개 패키지 성공
+- `/usr/bin/python3 -m pytest -q src/turtle_py/test`: `7 passed in 0.01s`
+- C++ 수동 빌드, CMake 빌드, `motor.o` 제외 링크 실패(`undefined reference`) 재현 성공
+- Valgrind: 11 allocations/11 frees, `All heap blocks were freed`, 오류 0
+- 신규 GUI smoke·화면 캡처·rosbag 재녹화: **미검증**. 샌드박스에서 X11/DDS 접근이 차단됐고 외부 실행 권한 요청이 사용자에 의해 중단됐다. 저장소의 기존 캡처 18장과 rosbag(377 messages)은 이전 Humble 실기 증거로 보존했다.
