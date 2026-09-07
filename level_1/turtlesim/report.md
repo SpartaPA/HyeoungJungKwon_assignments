@@ -230,4 +230,48 @@ python3 -m pytest -p no:anyio -q src/turtle_py/test
 ```text
 python3 -m pytest -p no:anyio -q src/turtle_py/test
 7 passed in 0.01s
+
+## 2026-09-07 추가 터미널 검증
+
+### 문제 1 C++ 빌드 출력
+
+```text
+printf "4 0.5" | ./stop_distance
+speed friction: stop_distance=16
+./motor_linux
+drive_motor started
+
+motor.o를 제외한 링크:
+undefined reference to `Motor::Motor(...)`
+undefined reference to `Motor::start() const`
+collect2: error: ld returned 1 exit status
+
+CMake: [100%] Built target motor_demo
+```
+
+### 문제 2 센서·Valgrind 출력
+
+```text
+lidar read=1.2
+imu read=0.03
+near_goal_count=1
+clamp_speed=1 clamp_pixel=255
+Lidar destroyed
+Sensor destroyed
+leak_safe_owner=1
+
+Valgrind: 11 allocs, 11 frees
+All heap blocks were freed -- no leaks are possible
+ERROR SUMMARY: 0 errors from 0 contexts
+```
+
+### 문제 4 Python publisher → C++ subscriber 교차 통신
+
+```text
+[distance_publisher]: distance node up
+[distance_monitor_cpp]: monitor C++ node up
+[distance_monitor_cpp]: distance=7.870
+```
+
+Python publisher가 발행한 `/turtle_dist`를 C++ subscriber가 반복 수신하는 것을 확인했다.
 ```
