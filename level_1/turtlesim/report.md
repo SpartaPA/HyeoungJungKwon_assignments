@@ -207,3 +207,10 @@ Ubuntu 22.04 + ROS 2 Humble 환경에서 colcon build, turtlesim 실행, 노드 
 - 실제 신규 캡처: [turtlesim](screenshots/22-turtlesim-final.png), [turtlesim 보조 화면](screenshots/23-topic-rate-final.png), [rqt_graph](screenshots/24-rqt-graph-final.png), [RViz2 world/TF/Marker 설정](screenshots/26-rviz2-world-tf-marker.png)
 
 제한 사항: `gnome-screenshot` 패키지는 sudo 비밀번호 프롬프트로 설치하지 못해 ImageMagick 대체 캡처를 사용했다. RViz2는 `Fixed Frame=world`, TF/Marker 디스플레이를 임시 설정 파일로 기동했고 Global Status가 정상임을 확인했다. 신규 bag은 `ros2 bag play ../bags/turtle_run_final --rate 10`으로 재생했으며, 별도 `ros2 topic echo /turtle_dist --once`에서 `data: 2.7924806058350633` 수신을 확인했다.
+
+## 2026-09-07 추가 보강
+
+- Waypoint publisher를 4개 경유점(P1~P4)으로 수정하고 `ros2 topic echo /waypoints --once`에서 P1=(2,2), P2=(6,2), P3=(6,6), P4=(2,6)을 확인했다.
+- `DrawPolygon` 오각형 goal: feedback `completed_sides=1..5`, `progress=0.2..1.0`, `total_distance=5.0`, `SUCCEEDED`.
+- `DrawPolygon` 팔각형 goal: feedback `completed_sides=1..8`, `progress=0.125..1.0`, `total_distance=8.0`, `SUCCEEDED`.
+- 추가 캡처: [오각형](screenshots/27-pentagon.png), [팔각형](screenshots/28-octagon.png).
