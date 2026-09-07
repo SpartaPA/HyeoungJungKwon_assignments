@@ -274,4 +274,14 @@ ERROR SUMMARY: 0 errors from 0 contexts
 ```
 
 Python publisher가 발행한 `/turtle_dist`를 C++ subscriber가 반복 수신하는 것을 확인했다.
+
+### 문제 5 RotateAbsolute 취소 보강
+
+```text
+[rotate_client]: remaining=3.045
+[rotate_client]: cancel_requested=True
+[rotate_client]: cancel_result_status=5 (expected 5)
+```
+
+goal 실행 중 feedback을 받은 뒤 취소 요청을 보냈고, ROS 2 `STATUS_CANCELED=5` 결과를 확인했다.
 ```
