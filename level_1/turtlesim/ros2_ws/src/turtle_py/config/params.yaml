@@ -3,4 +3,4 @@ distance_publisher:
     publish_rate: 5.0
 distance_monitor:
   ros__parameters:
-    warn_distance: 3.0
+    warn_distance: 1.0
