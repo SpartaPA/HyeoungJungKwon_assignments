@@ -284,4 +284,18 @@ Python publisher가 발행한 `/turtle_dist`를 C++ subscriber가 반복 수신�
 ```
 
 goal 실행 중 feedback을 받은 뒤 취소 요청을 보냈고, ROS 2 `STATUS_CANCELED=5` 결과를 확인했다.
+
+### 문제 7 QoS·depth 1 추가 출력
+
+```text
+New publisher discovered on topic '/turtle_dist', offering incompatible QoS.
+Last incompatible policy: RELIABILITY
+depth1 received=1 value=1.0
+depth1 received=2 value=6.0
+depth1 received=3 value=11.0
+depth1 received=4 value=16.0
+depth1 received=5 value=21.0
+```
+
+Best-Effort publisher와 Reliable subscriber의 연결 단절을 확인했고, 0.1초 발행·0.5초 처리의 depth 1 구독자에서 메시지 값이 건너뛰는 현상을 확인했다.
 ```
