@@ -214,3 +214,20 @@ Ubuntu 22.04 + ROS 2 Humble 환경에서 colcon build, turtlesim 실행, 노드 
 - `DrawPolygon` 오각형 goal: feedback `completed_sides=1..5`, `progress=0.2..1.0`, `total_distance=5.0`, `SUCCEEDED`.
 - `DrawPolygon` 팔각형 goal: feedback `completed_sides=1..8`, `progress=0.125..1.0`, `total_distance=8.0`, `SUCCEEDED`.
 - 추가 캡처: [오각형](screenshots/27-pentagon.png), [팔각형](screenshots/28-octagon.png).
+
+### 의도적 pytest 실패 검증
+
+`calculations.py`의 `distance()`에 임시로 `+ 1.0` 오차를 넣고 실행한 뒤 즉시 원복했다.
+
+```text
+python3 -m pytest -p no:anyio -q src/turtle_py/test
+2 failed, 5 passed in 0.04s
+실패: test_distance_normal_and_zero, test_reached_boundary_and_invalid_tolerance
+```
+
+원복 후 재실행 결과:
+
+```text
+python3 -m pytest -p no:anyio -q src/turtle_py/test
+7 passed in 0.01s
+```
