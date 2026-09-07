@@ -11,7 +11,7 @@ from turtle_interfaces.action import DrawPolygon
 class DrawPolygonServer(Node):
     def __init__(self):
         super().__init__('draw_polygon_server')
-        self.pub = self.create_publisher(Twist, '/turtle1/cmd_vel', 13)
+        self.pub = self.create_publisher(Twist, '/turtle1/cmd_vel', 10)
         self.server = ActionServer(
             self,
             DrawPolygon,

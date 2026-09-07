@@ -6,9 +6,9 @@ from turtlesim.msg import Pose
 
 class SquareDriver(Node):
     def __init__(self):
-        super().__init__('square_driver'); self.pub = self.create_publisher(Twist, '/turtle1/cmd_vel', 13)
+        super().__init__('square_driver'); self.pub = self.create_publisher(Twist, '/turtle1/cmd_vel', 10)
         self.phase = 0; self.tick = 0; self.enabled = True; self.home = None
-        self.pose_sub = self.create_subscription(Pose, '/turtle1/pose', self.update_pose, 13)
+        self.pose_sub = self.create_subscription(Pose, '/turtle1/pose', self.update_pose, 10)
         self.timer = self.create_timer(0.1, self.step)
         self.enable_service = self.create_service(SetBool, '/square_driver/set_enabled', self.set_enabled)
         self.home_service = self.create_service(Trigger, '/square_driver/save_home', self.save_home)
