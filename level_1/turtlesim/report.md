@@ -309,4 +309,15 @@ Double value is: 1.0
 ```
 
 `params.yaml`의 `warn_distance`를 3.0에서 1.0으로 바꾸고 재빌드 없이 파라미터 파일을 다시 읽어 동작값이 1.0으로 바뀌는 것을 확인했다.
+
+### 문제 3 두 subscriber 동시 수신
+
+동일한 publisher를 두 monitor가 동시에 구독했다.
+
+```text
+[distance_monitor]: distance 7.870 exceeds 1.000
+[distance_monitor_b]: distance 7.870 exceeds 1.000
+```
+
+두 노드가 같은 `/turtle_dist` 메시지를 동시에 수신하는 것을 확인했다.
 ```
