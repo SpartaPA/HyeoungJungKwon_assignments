@@ -1,0 +1,5 @@
+cmake_minimum_required(VERSION 3.22)
+project(sensor_demo)
+set(CMAKE_CXX_STANDARD 17)
+add_compile_options(-Wall -Wextra -Wpedantic)
+add_executable(sensor_demo main.cpp)

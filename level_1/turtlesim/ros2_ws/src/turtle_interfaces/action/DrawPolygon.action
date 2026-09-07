@@ -1,0 +1,7 @@
+int32 sides
+float64 side_length
+---
+float64 total_distance
+---
+int32 completed_sides
+float32 progress
