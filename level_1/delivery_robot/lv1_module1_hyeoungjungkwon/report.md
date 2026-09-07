@@ -169,7 +169,39 @@ git rebase main
 git log --oneline --graph --all
 ```
 
-보고서에 별도 연습 저장소 URL, PR URL, 실제 리뷰 코멘트, conflict 발생·해결 출력, merge/rebase 그래프를 추가한다. 현재 저장소에는 해당 외부 연습 저장소와 PR URL을 임의로 만들지 않고 미기재 상태로 남겼다.
+연습 저장소: https://github.com/SpartaPA/HyeoungJungKwon_git_practice
+PR: https://github.com/SpartaPA/HyeoungJungKwon_git_practice/pull/1
+
+PR 리뷰에서 "각 작업에 지연 예산과 주기 근거를 함께 기록하자"는 코멘트를 남겼고,
+`8ab361e docs: add latency budgets from review` 커밋으로 반영한 뒤 PR을 병합했다.
+
+의도적으로 같은 README 줄을 수정해 conflict를 만들었다.
+
+```text
+<<<<<<< HEAD
+| 2D LiDAR | 10 Hz (branch-b) |
+=======
+| 2D LiDAR | 20 Hz (branch-a) |
+>>>>>>> branch-a
+```
+
+충돌을 `15 Hz (resolved after branch-a/branch-b conflict)`로 정리하고
+`a8013e7 merge: resolve sensor rate conflict`로 병합했다.
+
+rebase 후 이력:
+
+```text
+* ccc857c docs: add udev rules and key table
+*   3160f52 Merge pull request #1
+|\
+| * 8ab361e docs: add latency budgets from review
+| * 43756cd docs: map delivery workloads to compute tiers
+|/
+* 146aef5 docs: add delivery robot sensor specification
+```
+
+merge 방식은 공유 브랜치의 실제 병합 관계를 보존할 때 사용하고,
+rebase 방식은 개인 작업 브랜치를 최신 main 위에 재배치해 선형 이력을 만들 때 사용한다.
 
 ## 2026-09-04 Linux 재검증
 
