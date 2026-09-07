@@ -178,12 +178,13 @@ PR 리뷰에서 "각 작업에 지연 예산과 주기 근거를 함께 기록�
 의도적으로 같은 README 줄을 수정해 conflict를 만들었다.
 
 ```text
-<<<<<<< HEAD
-| 2D LiDAR | 10 Hz (branch-b) |
-=======
-| 2D LiDAR | 20 Hz (branch-a) |
->>>>>>> branch-a
+현재 브랜치의 변경 줄
+충돌 구분선
+병합 대상 브랜치의 변경 줄
 ```
+
+실제 충돌 화면에는 Git이 표시하는 현재 브랜치·구분선·병합 대상 브랜치의 세 표식이 나타났고,
+각 표식의 의미를 확인한 뒤 최종 값 `15 Hz`로 해결했다.
 
 충돌을 `15 Hz (resolved after branch-a/branch-b conflict)`로 정리하고
 `a8013e7 merge: resolve sensor rate conflict`로 병합했다.
