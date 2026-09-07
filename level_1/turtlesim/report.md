@@ -298,4 +298,15 @@ depth1 received=5 value=21.0
 ```
 
 Best-Effort publisher와 Reliable subscriber의 연결 단절을 확인했고, 0.1초 발행·0.5초 처리의 depth 1 구독자에서 메시지 값이 건너뛰는 현상을 확인했다.
+
+### 문제 8~9 source·YAML 추가 출력
+
+```text
+source 전: Package 'turtle_py' not found
+source 후: /home/pa27/Git/HyeoungJungKwon_assginments/level_1/turtlesim/ros2_ws/install/turtle_py
+YAML 변경 후 warn_distance:
+Double value is: 1.0
+```
+
+`params.yaml`의 `warn_distance`를 3.0에서 1.0으로 바꾸고 재빌드 없이 파라미터 파일을 다시 읽어 동작값이 1.0으로 바뀌는 것을 확인했다.
 ```
